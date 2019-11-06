@@ -1,0 +1,44 @@
+<html>
+    <head>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsonstat"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsonstat-utils"></script>
+        <script src="js/drag-drop.js"></script>
+        <script src="js/jsonstat-d3-bar-chart.js"></script>
+        
+        <style>
+            .dragbox {
+                width: 300px;
+                height: 200px;
+                border: 1px solid;
+            }
+        </style>
+    </head>
+    <body onload="ready();">
+        <script>
+            var barchart;
+
+            function init(data) {
+                var ds = JSONstat(data);
+                    
+                var chartOptions = {
+                    data: ds,
+                    x: 'date',
+                    y: 'sex',
+                    width: 400,
+                    height: 300,
+                    target: document.getElementById('chartDiv')
+                };
+
+                barchart = JSONstatD3BarChart(chartOptions);
+            }
+
+            function ready() {
+                d3.text("data.csv").then(function(data) {
+                    init(JSONstatUtils.fromCSV(data, { label: 'Imported from CSV' }));
+                });
+            }
+        </script>
+        <div id="chartDiv"></div>
+    </body>
+</html>
