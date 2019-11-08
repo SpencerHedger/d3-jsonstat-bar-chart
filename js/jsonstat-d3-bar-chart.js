@@ -53,6 +53,7 @@ function JSONstatD3BarChart(options) {
 
     function redraw() {
         _ds = options.data.Dataset(options.dataset);
+        var hasZ = (options.x != options.z);
 
         if(options.filter === undefined || options.filter == null) options.filter = createDefaultFilter();
 
@@ -161,7 +162,8 @@ function JSONstatD3BarChart(options) {
 
         var rects = svg_g.selectAll(".slice").selectAll('rect')
             .data(function(x) {
-                return _ds.Dimension(options.z).id.map(function (z) {
+                if(!hasZ) return [{ x: x, z: x, value: dsValue(x, x) }];
+                else return _ds.Dimension(options.z).id.map(function (z) {
                     return { x: x, z: z, value: dsValue(x, z) };
                 });
             })
@@ -171,9 +173,16 @@ function JSONstatD3BarChart(options) {
 
         var rects = svg_g.selectAll('.slice rect');
 
-        rects.attr("width", x1.bandwidth())
-            .attr("x", d => x1(d.z))
-            .style("fill", d => color(d.z));
+        if(hasZ) { // Multiple bars per slice.
+            rects.attr("width", x1.bandwidth())
+                .attr("x", d => x1(d.z))
+                .style("fill", d => color(d.z));
+        }
+        else { // Just one bar per slice.
+            rects.attr('width', x0.bandwidth() - (options.xSpacing * 2))
+                .attr('x', options.xSpacing)
+                .style("fill", d => color(d.z));
+        }
 
         if(options.animate) {
             rects.transition(t)
@@ -247,6 +256,7 @@ function JSONstatD3BarChart(options) {
         if(x == options.x) return false;
         if(x == options.y) options.y = options.x; // Swap into y.
         if(x == options.z) options.z = options.x; // Swap into z.
+        if(options.x == options.z) options.z = x; // Syncronize.
         options.x = x;
         dirtySlices = true; // Bars need to be removed on next redraw.
         options.filter = createDefaultFilter();
@@ -264,10 +274,21 @@ function JSONstatD3BarChart(options) {
     }
 
     function setZ(z) {
-        if(z == options.z) return false;
-        if(z == options.x) options.x = options.z; // Swap into x.
-        if(z == options.y) options.y = options.z; // Swap into y.
-        options.z = z;
+        if(z == null) options.z = options.x;
+        else {
+            if(z == options.z) return false;
+            if(z == options.x) {
+                if(options.z != options.x) options.x = options.z; // Swap into x.
+                else return false; // Cannot take y.
+            }
+            if(z == options.y) {
+                if(options.z != options.y && options.x != options.z) options.y = options.z; // Swap into y.
+                else return false; // Cannot take x.
+            }
+
+            options.z = z;
+        }
+
         options.filter = createDefaultFilter();
         dirtySlices = true; // Potential change to x, so bars need to be removed.
         return true;
