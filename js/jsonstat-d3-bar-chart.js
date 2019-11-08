@@ -24,12 +24,20 @@ function JSONstatD3BarChart(options) {
     function createDefaultFilter() {
         var filter = {};
         _ds.Dimension().map(d => {
-            if((d.label != options.x) && (d.label != options.y)) filter[d.label] = d.id[0];
+            if((d.label != options.x) && (d.label != options.y)) {
+                // Maintain existing filter value if possible.
+                if((options.filter !== undefined) && (options.filter[d.label] != null)) filter[d.label] = options.filter[d.label];
+                else filter[d.label] = d.id[0]; // Use first value.
+            }
+            else filter[d.label] = null; // x and y dimensions are discarded from filter.
         });
+
         return filter;
     }
 
     if(options.filter === undefined || options.filter == null) options.filter = createDefaultFilter();
+
+    var dirtySlices = false;
 
     function redraw() {
         _ds = options.data.Dataset(options.dataset);
@@ -42,20 +50,31 @@ function JSONstatD3BarChart(options) {
         
         // Get a list of all values
         function allValues() {
-            var filter = options.filter;
+            var filter = JSON.parse(JSON.stringify(options.filter));;
             var values = [];
             var xDim = _ds.Dimension(options.x);
 
-            // Loop through x
-            for(var i = 0; i < xDim.length; i++) {
-                filter[options.x] = xDim.id[i];
+            // Scale data values over entire range of a given dimension.
+            var scaleOver = [];
+            if(options.scaleToFitDimension) {
+                scaleOver = _ds.Dimension(options.scaleToFitDimension).id;
+            }
+            else scaleOver.push(''); // Dummy entry.
 
-                var yDim = _ds.Dimension(options.y);
+            for(var k = 0; k < scaleOver.length; k++) {
+                if(options.scaleToFitDimension) filter[options.scaleToFitDimension] = scaleOver[k];
 
-                // Loop through y
-                for(var j = 0; j < yDim.length; j++) {
-                    filter[options.y] = yDim.id[j];
-                    values.push(_ds.Data(filter).value);
+                // Loop through x
+                for(var i = 0; i < xDim.length; i++) {
+                    filter[options.x] = xDim.id[i];
+
+                    var yDim = _ds.Dimension(options.y);
+
+                    // Loop through y
+                    for(var j = 0; j < yDim.length; j++) {
+                        filter[options.y] = yDim.id[j];
+                        values.push(_ds.Data(filter).value);
+                    }
                 }
             }
 
@@ -70,13 +89,11 @@ function JSONstatD3BarChart(options) {
 
         // Retrieve a value from the data for a given x and y dimension value.
         function dsValue(x, y) {
-            options.filter = options.filter || {};
+            options.filter = options.filter || createDefaultFilter();
             options.filter[options.x] = x;
             options.filter[options.y] = y;
 
             var value = _ds.Data(options.filter).value;
-
-            console.log({ filter: options.filter, value: value });
             return value;
         }
 
@@ -110,6 +127,13 @@ function JSONstatD3BarChart(options) {
         var t = d3.transition().duration(500);
         svg_g_xaxis.call(xAxis);
         svg_g_yaxis.call(yAxis);
+
+        // When slices are dirty, bars and legend need to be removed.
+        if(dirtySlices) {
+            svg_g.selectAll('.slice').remove();
+            svg_g.selectAll('.legend').remove();
+            dirtySlices = false; // Slices are ok.
+        }
 
         svg_g.selectAll(".slice")
             .data(_ds.Dimension(options.x).id)
@@ -145,8 +169,6 @@ function JSONstatD3BarChart(options) {
                 .attr("height", d => chartHeight - y(d.value));
         }
 
-        rects.exit().remove();
-        
         // Legend
         var legend_enter = svg_g.selectAll(".legend")
             .data(yNames)
@@ -177,10 +199,30 @@ function JSONstatD3BarChart(options) {
             .attr("transform", function(d,i) { return "translate(0," + (i * 20) + ")"; });
     }
 
+    function setX(x) {
+        if(x == options.x) return false;
+        if(x == options.y) options.y = options.x; // Swap into y.
+        options.x = x;
+        dirtySlices = true; // Bars need to be removed on next redraw.
+        options.filter = createDefaultFilter();
+        return true;
+    }
+
+    function setY(y) {
+        if(y == options.y) return false;
+        if(y == options.x) options.x = options.y; // Swap into x.
+        options.y = y;
+        options.filter = createDefaultFilter();
+        dirtySlices = true; // Potential change to x, so bars need to be removed.
+        return true;
+    }
+
     redraw();
 
     return {
-        refresh: redraw,
-        options: options
+        redraw: redraw,
+        options: options,
+        setX: setX,
+        setY: setY
     };
 }
