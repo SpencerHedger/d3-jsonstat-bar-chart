@@ -1,7 +1,14 @@
 function JSONstatD3BarChart(options) {
+    // Required options check.
+    if(!options.x) console.log('Error: no x dimension option specified.');
+    if(!options.y) console.log('Error: no y dimension option specified.');
+ 
     // Default options.
-    options.margin = options.margin || { top: 30, right: 70, bottom: 20, left: 30 };
-    options.colors = options.colors || ["#ca0020","#f4a582","#d5d5d5","#92c5de","#0571b0"]
+    options.title = options.title || 'Untitled chart';
+    options.width = options.width || 660;
+    options.height = options.height || 350;
+    options.margin = options.margin || { top: 40, right: 70, bottom: 50, left: 50 };
+    options.colors = options.colors || ["#f59a54","#4e9b9d","#88608b","#cb9f20","#c68bc6"]
     if(options.xSpacing === undefined) options.xSpacing = 10;
     if(options.animate === undefined) options.animate = true;
     if(options.dataset === undefined) options.dataset = 0;
@@ -15,6 +22,11 @@ function JSONstatD3BarChart(options) {
     var yAxis = d3.axisLeft();
     var svg = d3.select(options.target).append("svg");
     var svg_g = svg.append("g");
+    var svg_g_title = svg_g.append('text')
+        .attr('class', 'chart-title');
+    var svg_g_legend_title = svg_g.append('text')
+        .attr('class', 'legend-title')
+        .style('text-anchor', 'end');
     var svg_g_xaxis = svg_g.append("g")
         .attr("class", "x axis");
     var svg_g_yaxis = svg_g.append("g")
@@ -24,7 +36,7 @@ function JSONstatD3BarChart(options) {
     function createDefaultFilter() {
         var filter = {};
         _ds.Dimension().map(d => {
-            if((d.label != options.x) && (d.label != options.y)) {
+            if((d.label != options.x) && (d.label != options.z)) {
                 // Maintain existing filter value if possible.
                 if((options.filter !== undefined) && (options.filter[d.label] != null)) filter[d.label] = options.filter[d.label];
                 else filter[d.label] = d.id[0]; // Use first value.
@@ -46,7 +58,7 @@ function JSONstatD3BarChart(options) {
 
         var chartHeight = options.height - options.margin.top - options.margin.bottom;
         var xNames = _ds.Dimension(options.x).id;
-        var yNames = _ds.Dimension(options.y).id;
+        var zNames = _ds.Dimension(options.z).id;
         
         // Get a list of all values
         function allValues() {
@@ -68,11 +80,11 @@ function JSONstatD3BarChart(options) {
                 for(var i = 0; i < xDim.length; i++) {
                     filter[options.x] = xDim.id[i];
 
-                    var yDim = _ds.Dimension(options.y);
+                    var zDim = _ds.Dimension(options.z);
 
-                    // Loop through y
-                    for(var j = 0; j < yDim.length; j++) {
-                        filter[options.y] = yDim.id[j];
+                    // Loop through z
+                    for(var j = 0; j < zDim.length; j++) {
+                        filter[options.z] = zDim.id[j];
                         values.push(_ds.Data(filter).value);
                     }
                 }
@@ -88,14 +100,18 @@ function JSONstatD3BarChart(options) {
         }
 
         // Retrieve a value from the data for a given x and y dimension value.
-        function dsValue(x, y) {
+        function dsValue(x, z) {
             options.filter = options.filter || createDefaultFilter();
             options.filter[options.x] = x;
-            options.filter[options.y] = y;
+            options.filter[options.z] = z;
 
             var value = _ds.Data(options.filter).value;
             return value;
         }
+
+        svg_g_title.text(options.title)
+            .attr('x', 0 - options.margin.left)
+            .attr('y', 0 - options.margin.top / 2);
 
         svg_g.attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
 
@@ -114,7 +130,7 @@ function JSONstatD3BarChart(options) {
 
         x0.domain(xNames);
         
-        x1.domain(yNames)
+        x1.domain(zNames)
             .range([options.xSpacing, x0.bandwidth()-options.xSpacing]);
 
         y.domain([0, maxValue()]);
@@ -145,8 +161,8 @@ function JSONstatD3BarChart(options) {
 
         var rects = svg_g.selectAll(".slice").selectAll('rect')
             .data(function(x) {
-                return _ds.Dimension(options.y).id.map(function (y) {
-                    return { x: x, y: y, value: dsValue(x, y) };
+                return _ds.Dimension(options.z).id.map(function (z) {
+                    return { x: x, z: z, value: dsValue(x, z) };
                 });
             })
             .enter().append("rect")
@@ -156,8 +172,8 @@ function JSONstatD3BarChart(options) {
         var rects = svg_g.selectAll('.slice rect');
 
         rects.attr("width", x1.bandwidth())
-            .attr("x", d => x1(d.y))
-            .style("fill", d => color(d.y));
+            .attr("x", d => x1(d.z))
+            .style("fill", d => color(d.z));
 
         if(options.animate) {
             rects.transition(t)
@@ -170,8 +186,12 @@ function JSONstatD3BarChart(options) {
         }
 
         // Legend
-        var legend_enter = svg_g.selectAll(".legend")
-            .data(yNames)
+        svg_g_legend_title.text(_ds.Dimension(options.z).label)
+            .attr('x', options.width - 24)
+            .attr('y', -10);
+
+        svg_g.selectAll(".legend")
+            .data(zNames)
                 .enter()
                 .append("g")
                     .attr("class", "legend");
@@ -197,11 +217,36 @@ function JSONstatD3BarChart(options) {
         
         svg_g.selectAll('.legend')
             .attr("transform", function(d,i) { return "translate(0," + (i * 20) + ")"; });
+
+        // text label for the x axis
+        svg_g.selectAll('.x-axis-label').data([_ds.Dimension(options.x)]).enter()
+            .append("text")
+            .style("text-anchor", "middle")
+            .attr('class', 'x-axis-label');
+
+        svg_g.selectAll('.x-axis-label')
+            .attr("x", (options.width - options.margin.left - options.margin.right)/2)
+            .attr('y', options.height - options.margin.bottom)
+            .text(f => f.label);
+        
+        // text label for the y axis
+        svg_g.selectAll('.y-axis-label').data([_ds.Dimension(options.y)]).enter()
+            .append("text")
+            .style("text-anchor", "middle")
+            .style('writing-mode', 'tb')
+            .style("glyph-orientation-vertical", "90")
+            .attr('class', 'y-axis-label');
+
+        svg_g.selectAll('.y-axis-label')
+            .attr("x", 0 - options.margin.left + 10)
+            .attr('y', chartHeight / 2)
+            .text(f => f.Category(options.filter[options.y]).label + ' (' + _ds.Dimension(options.y).label + ')');
     }
 
     function setX(x) {
         if(x == options.x) return false;
         if(x == options.y) options.y = options.x; // Swap into y.
+        if(x == options.z) options.z = options.x; // Swap into z.
         options.x = x;
         dirtySlices = true; // Bars need to be removed on next redraw.
         options.filter = createDefaultFilter();
@@ -211,7 +256,18 @@ function JSONstatD3BarChart(options) {
     function setY(y) {
         if(y == options.y) return false;
         if(y == options.x) options.x = options.y; // Swap into x.
+        if(y == options.z) options.z = options.y; // Swap into z.
         options.y = y;
+        options.filter = createDefaultFilter();
+        dirtySlices = true; // Potential change to x, so bars need to be removed.
+        return true;
+    }
+
+    function setZ(z) {
+        if(z == options.z) return false;
+        if(z == options.x) options.x = options.z; // Swap into x.
+        if(z == options.y) options.y = options.z; // Swap into y.
+        options.z = z;
         options.filter = createDefaultFilter();
         dirtySlices = true; // Potential change to x, so bars need to be removed.
         return true;
@@ -223,6 +279,7 @@ function JSONstatD3BarChart(options) {
         redraw: redraw,
         options: options,
         setX: setX,
-        setY: setY
+        setY: setY,
+        setZ: setZ
     };
 }
