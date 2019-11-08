@@ -7,10 +7,37 @@
         <script src="js/jsonstat-d3-bar-chart.js"></script>
         
         <style>
+            svg {
+                font-family: verdana;
+            }
             .dragbox {
                 width: 300px;
                 height: 200px;
                 border: 1px solid;
+            }
+
+            svg .chart-title {
+                font-size: 25px;
+            }
+
+            svg .legend-text {
+                font-size: 15px;
+            }
+
+            svg .legend-title {
+                font-size: 15px;
+                text-transform: capitalize;
+                font-weight: bold;
+            }
+
+            svg .x-axis-label, svg .y-axis-label {
+                text-transform: capitalize;
+                font-size: 15px;
+                font-weight: bold;
+            }
+
+            .axis > g > text {
+                font-size: 15px;
             }
         </style>
     </head>
@@ -23,8 +50,9 @@
                     
                 var chartOptions = {
                     data: ds,
-                    x: 'date',
-                    y: 'sex',
+                    x: 'sex',
+                    y: 'measure',
+                    z: 'date',
                     width: 650,
                     height: 450,
                     target: document.getElementById('chartDiv')
