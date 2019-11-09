@@ -176,6 +176,9 @@ function JSONstatD3BarChart(options) {
 
         yAxis.scale(y);
 
+        // Apply formatting to the values on the Y-Axis.
+        if(options.yAxisFormat !== undefined) yAxis.tickFormat(d3.format(options.yAxisFormat));
+
         var color = d3.scaleOrdinal()
             .range(options.colors);
 
