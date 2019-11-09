@@ -9,6 +9,7 @@ function JSONstatD3BarChart(options) {
     options.height = options.height || 350;
     options.margin = options.margin || { top: 40, right: 70, bottom: 50, left: 50 };
     options.colors = options.colors || ["#f59a54","#4e9b9d","#88608b","#cb9f20","#c68bc6"]
+
     if(options.xSpacing === undefined) options.xSpacing = 10;
     if(options.animate === undefined) options.animate = true;
     if(options.dataset === undefined) options.dataset = 0;
@@ -31,6 +32,55 @@ function JSONstatD3BarChart(options) {
         .attr("class", "x axis");
     var svg_g_yaxis = svg_g.append("g")
         .attr("class", "y axis");
+
+    function handleBarMouseOver(d, i) {
+        d3.selectAll('.chart-bar').classed('chart-bar-inactive', true);
+        d3.selectAll('.legend').classed('chart-legend-inactive', true);
+        d3.select('.legend-' + i)
+            .classed('chart-legend-mouseover', true)
+            .classed('chart-legend-inactive', false);
+
+        d3.select(this)
+            .classed('chart-bar-mouseover', true)
+            .classed('chart-bar-inactive', false);
+
+        if(options.events && options.events.bar &&
+            options.events.bar.mouseOver) options.events.bar.mouseOver(d, i);
+    }
+
+    function handleBarMouseOut(d, i) {
+        d3.selectAll('.chart-bar').classed('chart-bar-inactive', false);
+        d3.selectAll('.legend').classed('chart-legend-inactive', false);
+        d3.select('.legend-' + i).classed('chart-legend-mouseover', false);
+        d3.select(this).classed('chart-bar-mouseover', false);
+
+        if(options.events && options.events.bar &&
+            options.events.bar.mouseOut) options.events.bar.mouseOut(d, i);
+    }
+
+    function handleLegendMouseOver(d, i) {
+        d3.selectAll('.legend').classed('chart-legend-inactive', true);
+        d3.select(this)
+            .classed('chart-legend-inactive', false)
+            .classed('chart-legend-mouseover', true);
+        d3.selectAll('.chart-bar').classed('chart-bar-inactive', true);
+        d3.selectAll('.chart-bar-' + i)
+            .classed('chart-bar-mouseover', true)
+            .classed('chart-bar-inactive', false);
+
+        if(options.events && options.events.legend &&
+            options.events.legend.mouseOver) options.events.legend.mouseOver(d, i);
+    }
+
+    function handleLegendMouseOut(d, i) {
+        d3.select(this).classed('chart-legend-mouseover', false);
+        d3.selectAll('.legend').classed('chart-legend-inactive', false);
+        d3.selectAll('.chart-bar').classed('chart-bar-inactive', false);
+        d3.selectAll('.chart-bar-' + i).classed('chart-bar-mouseover', false);
+
+        if(options.events && options.events.legend &&
+            options.events.legend.mouseOut) options.events.legend.mouseOut(d, i);
+    }
 
     // Create a filter with valid default values
     function createDefaultFilter() {
@@ -168,8 +218,11 @@ function JSONstatD3BarChart(options) {
                 });
             })
             .enter().append("rect")
+                .attr('class', (d, i) => 'chart-bar chart-bar-' + i, true)
                 .attr("y", d => options.animate? y(0) : y(d.value))
-                .attr("height", d => options.animate? 0 : chartHeight - y(d.value));
+                .attr("height", d => options.animate? 0 : chartHeight - y(d.value))
+                .on("mouseover", handleBarMouseOver)
+                .on("mouseout", handleBarMouseOut);
 
         var rects = svg_g.selectAll('.slice rect');
 
@@ -203,7 +256,9 @@ function JSONstatD3BarChart(options) {
             .data(zNames)
                 .enter()
                 .append("g")
-                    .attr("class", "legend");
+                    .attr("class", (d, i) => "legend legend-" + i)
+                    .on('mouseover', handleLegendMouseOver)
+                    .on('mouseout', handleLegendMouseOut)
 
         svg_g.selectAll('.legend').append("rect")
             .attr('class', 'legend-key')
