@@ -51,9 +51,9 @@
                     
                 var chartOptions = {
                     data: ds,
-                    x: 'sex',
-                    y: 'measure',
-                    z: 'date',
+                    x: 'gender',
+                    y: 'measures',
+                    z: 'time',
                     yAxisFormat: ',.0f',
                     width: 650,
                     height: 450,
@@ -64,9 +64,13 @@
             }
 
             function ready() {
-                d3.text("data.csv").then(function(data) {
-                    init(JSONstatUtils.fromCSV(data, { label: 'Imported from CSV' }));
+                d3.json("https://www.nomisweb.co.uk/api/v01/dataset/NM_162_1.jsonstat.json?geography=2013265921...2013265932&date=latestMINUS8-latest&gender=0...2&age=0...4&measure=1,2&measures=20100").then(function(data) {
+                    init(data);
                 });
+                // Read from CSV
+                //d3.text("data.csv").then(function(data) {
+                //    init(JSONstatUtils.fromCSV(data, { label: 'Imported from CSV' }));
+                //});
             }
         </script>
         <div id="chartDiv"></div>
