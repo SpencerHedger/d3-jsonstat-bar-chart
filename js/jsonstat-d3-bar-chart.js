@@ -7,8 +7,9 @@ function JSONstatD3BarChart(options) {
     options.title = options.title || 'Untitled chart';
     options.width = options.width || 660;
     options.height = options.height || 350;
-    options.margin = options.margin || { top: 40, right: 70, bottom: 50, left: 50 };
+    options.margin = options.margin || { top: 40, right: 150, bottom: 100, left: 100 };
     options.colors = options.colors || ["#f59a54","#4e9b9d","#88608b","#cb9f20","#c68bc6"]
+    options.legendPadding = options.legendPadding || 50;
 
     if(options.xSpacing === undefined) options.xSpacing = 10;
     if(options.animate === undefined) options.animate = true;
@@ -85,13 +86,13 @@ function JSONstatD3BarChart(options) {
     // Create a filter with valid default values
     function createDefaultFilter() {
         var filter = {};
-        _ds.Dimension().map(d => {
-            if((d.label != options.x) && (d.label != options.z)) {
+        _ds.id.map(d => {
+            if((d != options.x) && (d != options.z)) {
                 // Maintain existing filter value if possible.
-                if((options.filter !== undefined) && (options.filter[d.label] != null)) filter[d.label] = options.filter[d.label];
-                else filter[d.label] = d.id[0]; // Use first value.
+                if((options.filter !== undefined) && (options.filter[d] != null)) filter[d] = options.filter[d];
+                else filter[d] = _ds.Dimension(d).id[0]; // Use first value.
             }
-            else filter[d.label] = null; // x and y dimensions are discarded from filter.
+            else filter[d] = null; // x and y dimensions are discarded from filter.
         });
 
         return filter;
@@ -108,7 +109,7 @@ function JSONstatD3BarChart(options) {
         if(options.filter === undefined || options.filter == null) options.filter = createDefaultFilter();
 
         var chartHeight = options.height - options.margin.top - options.margin.bottom;
-        var xNames = _ds.Dimension(options.x).id;
+        var xNames = _ds.Dimension(options.x).Category().map(d => d.label);
         var zNames = _ds.Dimension(options.z).id;
         
         // Get a list of all values
@@ -195,7 +196,12 @@ function JSONstatD3BarChart(options) {
         svg_g_xaxis.attr("transform", "translate(0," + chartHeight + ")")
 
         var t = d3.transition().duration(500);
-        svg_g_xaxis.call(xAxis);
+        svg_g_xaxis.call(xAxis)
+            .selectAll("text")
+                .attr("y", 0)
+                .attr("x", 9)
+                .attr("transform", "rotate(45)")
+                .style("text-anchor", "start");;
         svg_g_yaxis.call(yAxis);
 
         // When slices are dirty, bars and legend need to be removed.
@@ -211,7 +217,7 @@ function JSONstatD3BarChart(options) {
                 .attr("class", "slice");
         
         svg_g.selectAll('.slice')
-            .attr("transform", d => "translate(" + x0(d) + ",0)");
+            .attr("transform", d => "translate(" + x0(_ds.Dimension(options.x).Category(d).label) + ",0)");
 
         var rects = svg_g.selectAll(".slice").selectAll('rect')
             .data(function(x) {
@@ -252,8 +258,9 @@ function JSONstatD3BarChart(options) {
 
         // Legend
         svg_g_legend_title.text(_ds.Dimension(options.z).label)
-            .attr('x', options.width - 24)
-            .attr('y', -10);
+            .attr('x', options.width - options.margin.right - options.margin.left + options.legendPadding)
+            .attr('y', -10)
+            .style("text-anchor", "start");
 
         svg_g.selectAll(".legend")
             .data(zNames)
@@ -265,22 +272,22 @@ function JSONstatD3BarChart(options) {
 
         svg_g.selectAll('.legend').append("rect")
             .attr('class', 'legend-key')
-            .attr("width", 18)
-            .attr("height", 18)
+            .attr("width", 20)
+            .attr("height", 20)
 
         svg_g.selectAll('.legend').append("text")
             .attr('class', 'legend-text')
             .attr("dy", ".35em")
-            .attr("y", 9)
-            .style("text-anchor", "end");
+            .attr("y", 9);
 
         svg_g.selectAll('.legend-key')
-            .attr("x", options.width - 18)
+            .attr("x", options.width - options.margin.right - options.margin.left + options.legendPadding)
             .style("fill", d => color(d));
 
         svg_g.selectAll('.legend-text')
-            .attr("x", options.width - 24)
-            .text(d => d);
+            .attr("x", options.width - options.margin.right - options.margin.left + options.legendPadding + 24)
+            .attr("height", 20)
+            .text(d => _ds.Dimension(options.z).Category(d).label);
         
         svg_g.selectAll('.legend')
             .attr("transform", function(d,i) { return "translate(0," + (i * 20) + ")"; });
@@ -293,7 +300,7 @@ function JSONstatD3BarChart(options) {
 
         svg_g.selectAll('.x-axis-label')
             .attr("x", (options.width - options.margin.left - options.margin.right)/2)
-            .attr('y', options.height - options.margin.bottom)
+            .attr('y', options.height - 50)
             .text(f => f.label);
         
         // text label for the y axis
