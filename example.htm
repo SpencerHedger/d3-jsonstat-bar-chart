@@ -3,7 +3,6 @@
         <script src="https://d3js.org/d3.v5.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/jsonstat"></script>
         <script src="https://cdn.jsdelivr.net/npm/jsonstat-utils"></script>
-        <script src="js/drag-drop.js"></script>
         <script src="js/jsonstat-d3-bar-chart.js"></script>
         
         <style>
@@ -30,7 +29,7 @@
                 font-weight: bold;
             }
 
-            svg .x-axis-label, svg .y-axis-label {
+            svg .x-axis-title, svg .y-axis-title {
                 text-transform: capitalize;
                 font-size: 15px;
                 font-weight: bold;
@@ -55,6 +54,33 @@
                     y: 'measures',
                     z: 'time',
                     yAxisFormat: ',.0f',
+                    events: {
+                        bar: {
+                            click: (d,i,e) => console.log('Clicked ' + d.x + ',' + d.z),
+                            mouseOver: (d,i,e) => console.log('Mouse over ' + d.x + ',' + d.z),
+                            mouseOut: (d,i,e) => console.log('Mouse out ' + d.x + ',' + d.z)
+                        },
+                        legendItem: {
+                            click: (d,i,e) => console.log('Clicked ' + d),
+                            mouseOver: (d,i,e) => console.log('Mouse over ' + d),
+                            mouseOut: (d,i,e) => console.log('Mouse out ' + d)
+                        },
+                        xAxisTitle: {
+                            click: (d,e) => console.log('Clicked ' + d.label),
+                            mouseOver: (d,e) => console.log('Mouse over ' + d.label),
+                            mouseOut: (d,e) => console.log('Mouse out ' + d.label)
+                        },
+                        yAxisTitle: {
+                            click: (d,e) => console.log('Clicked ' + d.label),
+                            mouseOver: (d,e) => console.log('Mouse over ' + d.label),
+                            mouseOut: (d,e) => console.log('Mouse out ' + d.label)
+                        },
+                        legendTitle: {
+                            click: (d,e) => console.log('Clicked ' + d.label),
+                            mouseOver: (d,e) => console.log('Mouse over ' + d.label),
+                            mouseOut: (d,e) => console.log('Clicked ' + d.label)
+                        }
+                    },
                     width: 650,
                     height: 450,
                     target: document.getElementById('chartDiv')
