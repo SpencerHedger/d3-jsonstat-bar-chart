@@ -6,6 +6,10 @@
         <script src="js/jsonstat-d3-bar-chart.js"></script>
         
         <style>
+            body { font-family: verdana; }
+            #chartDiv1, #chartDiv2 {
+                padding: 1.5em;
+            }
             svg {
                 font-family: verdana;
             }
@@ -23,16 +27,11 @@
                 font-size: 15px;
             }
 
-            svg .legend-title {
+            svg .legend-title, svg .x-axis-title, svg .y-axis-title {
                 font-size: 15px;
                 text-transform: capitalize;
                 font-weight: bold;
-            }
-
-            svg .x-axis-title, svg .y-axis-title {
-                text-transform: capitalize;
-                font-size: 15px;
-                font-weight: bold;
+                cursor: pointer;
             }
 
             .chart-bar-inactive, .chart-legend-inactive { opacity: 0.2; }
@@ -42,63 +41,94 @@
         </style>
     </head>
     <body onload="ready();">
+        <h1>JSON-stat from an API</h1>
+        <p>Click the axis and legend titles to demonstrate axis changes.</p>
+        <div id="chartData1">&nbsp;</div>
+        <div id="chartDiv1"></div>
+
+        <h1>CSV from static file</h1>
+        <p>Click the axis and legend titles to demonstrate axis changes.</p>
+        <div id="chartData2">&nbsp;</div>
+        <div id="chartDiv2"></div>
+
         <script>
-            var barchart;
-
-            function init(data) {
-                var ds = JSONstat(data);
-                    
-                var chartOptions = {
-                    data: ds,
-                    x: 'gender',
-                    y: 'measures',
-                    z: 'time',
-                    yAxisFormat: ',.0f',
-                    events: {
-                        bar: {
-                            click: (d,i,e) => console.log('Clicked ' + d.x + ',' + d.z),
-                            mouseOver: (d,i,e) => console.log('Mouse over ' + d.x + ',' + d.z),
-                            mouseOut: (d,i,e) => console.log('Mouse out ' + d.x + ',' + d.z)
-                        },
-                        legendItem: {
-                            click: (d,i,e) => console.log('Clicked ' + d),
-                            mouseOver: (d,i,e) => console.log('Mouse over ' + d),
-                            mouseOut: (d,i,e) => console.log('Mouse out ' + d)
-                        },
-                        xAxisTitle: {
-                            click: (d,e) => console.log('Clicked ' + d.label),
-                            mouseOver: (d,e) => console.log('Mouse over ' + d.label),
-                            mouseOut: (d,e) => console.log('Mouse out ' + d.label)
-                        },
-                        yAxisTitle: {
-                            click: (d,e) => console.log('Clicked ' + d.label),
-                            mouseOver: (d,e) => console.log('Mouse over ' + d.label),
-                            mouseOut: (d,e) => console.log('Mouse out ' + d.label)
-                        },
-                        legendTitle: {
-                            click: (d,e) => console.log('Clicked ' + d.label),
-                            mouseOver: (d,e) => console.log('Mouse over ' + d.label),
-                            mouseOut: (d,e) => console.log('Clicked ' + d.label)
-                        }
-                    },
-                    width: 650,
-                    height: 450,
-                    target: document.getElementById('chartDiv')
-                };
-
-                barchart = JSONstatD3BarChart(chartOptions);
-            }
+            var barchart1;
+            var barchart2;
 
             function ready() {
+                // Read JSON-stat from an API.  
                 d3.json("https://www.nomisweb.co.uk/api/v01/dataset/NM_162_1.jsonstat.json?geography=2013265921...2013265932&date=latestMINUS8-latest&gender=0...2&age=0...4&measure=1,2&measures=20100").then(function(data) {
-                    init(data);
+                    var ds = JSONstat(data);
+                    
+                    barchart1 = JSONstatD3BarChart({
+                        data: ds,
+                        title: ds.Dataset(0).label,
+                        x: 'gender',
+                        y: 'measures',
+                        z: 'time',
+                        yAxisFormat: ',.0f',
+                        events: {
+                            bar: {
+                                mouseOver: (d,i,e) => document.getElementById('chartData1').innerHTML = 'Value=' + d.value,
+                                mouseOut: (d,i,e) => document.getElementById('chartData1').innerHTML = '&nbsp;'
+                            },
+                            legendItem: {
+                                click: (d,i,e) => console.log('Clicked ' + d),
+                                mouseOver: (d,i,e) => console.log('Mouse over ' + d),
+                                mouseOut: (d,i,e) => console.log('Mouse out ' + d)
+                            },
+                            xAxisTitle: {
+                                click: (d,e) => { barchart1.setX(barchart1.options.y); barchart1.redraw(); },
+                                mouseOver: (d,e) => console.log('Mouse over ' + d.label),
+                                mouseOut: (d,e) => console.log('Mouse out ' + d.label)
+                            },
+                            yAxisTitle: {
+                                click: (d,e) => { barchart1.setY(barchart1.options.z); barchart1.redraw(); },
+                                mouseOver: (d,e) => console.log('Mouse over ' + d.label),
+                                mouseOut: (d,e) => console.log('Mouse out ' + d.label)
+                            },
+                            legendTitle: {
+                                click: (d,e) => { barchart1.setZ(barchart1.options.x); barchart1.redraw(); },
+                                mouseOver: (d,e) => console.log('Mouse over ' + d.label),
+                                mouseOut: (d,e) => console.log('Clicked ' + d.label)
+                            }
+                        },
+                        width: 650,
+                        height: 450,
+                        target: 'chartDiv1'
+                    });
                 });
-                // Read from CSV
-                //d3.text("data.csv").then(function(data) {
-                //    init(JSONstatUtils.fromCSV(data, { label: 'Imported from CSV' }));
-                //});
+
+                // Read from CSV.
+                d3.text("data.csv").then(function(data) {
+                    barchart2 = JSONstatD3BarChart({
+                        data: JSONstat(JSONstatUtils.fromCSV(data, { label: 'Imported from CSV' })),
+                        title: 'Random data',
+                        x: 'date',
+                        y: 'measure',
+                        z: 'sex',
+                        events: {
+                            bar: {
+                                mouseOver: (d,i,e) => document.getElementById('chartData2').innerHTML = 'Value=' + d.value,
+                                mouseOut: (d,i,e) => document.getElementById('chartData2').innerHTML = '&nbsp;'
+                            },
+                            xAxisTitle: {
+                                click: (d,e) => { barchart2.setX(barchart2.options.y); barchart2.redraw(); },
+                            },
+                            yAxisTitle: {
+                                click: (d,e) => { barchart2.setY(barchart2.options.z); barchart2.redraw(); },
+                            },
+                            legendTitle: {
+                                click: (d,e) => { barchart2.setZ(barchart2.options.x); barchart2.redraw(); },
+                            }
+                        },
+                        yAxisFormat: ',.0f',
+                        width: 650,
+                        height: 450,
+                        target: 'chartDiv2'
+                    });
+                });
             }
         </script>
-        <div id="chartDiv"></div>
     </body>
 </html>
