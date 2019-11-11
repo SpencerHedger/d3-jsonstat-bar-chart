@@ -46,7 +46,7 @@ function JSONstatD3BarChart(options) {
             .classed('chart-bar-inactive', false);
 
         if(options.events && options.events.bar &&
-            options.events.bar.mouseOver) options.events.bar.mouseOver(d, i);
+            options.events.bar.mouseOver) options.events.bar.mouseOver(d, i, this);
     }
 
     function handleBarMouseOut(d, i) {
@@ -56,7 +56,12 @@ function JSONstatD3BarChart(options) {
         d3.select(this).classed('chart-bar-mouseover', false);
 
         if(options.events && options.events.bar &&
-            options.events.bar.mouseOut) options.events.bar.mouseOut(d, i);
+            options.events.bar.mouseOut) options.events.bar.mouseOut(d, i, this);
+    }
+
+    function handleBarClick(d, i) {
+        if(options.events && options.events.bar &&
+            options.events.bar.click) options.events.bar.click(d, i, this);
     }
 
     function handleLegendMouseOver(d, i) {
@@ -69,8 +74,8 @@ function JSONstatD3BarChart(options) {
             .classed('chart-bar-mouseover', true)
             .classed('chart-bar-inactive', false);
 
-        if(options.events && options.events.legend &&
-            options.events.legend.mouseOver) options.events.legend.mouseOver(d, i);
+        if(options.events && options.events.legendItem &&
+            options.events.legendItem.mouseOver) options.events.legendItem.mouseOver(d, i, this);
     }
 
     function handleLegendMouseOut(d, i) {
@@ -79,8 +84,50 @@ function JSONstatD3BarChart(options) {
         d3.selectAll('.chart-bar').classed('chart-bar-inactive', false);
         d3.selectAll('.chart-bar-' + i).classed('chart-bar-mouseover', false);
 
-        if(options.events && options.events.legend &&
-            options.events.legend.mouseOut) options.events.legend.mouseOut(d, i);
+        if(options.events && options.events.legendItem &&
+            options.events.legendItem.mouseOut) options.events.legendItem.mouseOut(d, i, this);
+    }
+
+    function handleLegendClick(d, i) {
+        if(options.events && options.events.legendItem &&
+            options.events.legendItem.click) options.events.legendItem.click(d, i, this);
+    }
+
+    function handleXAxisTitleMouseOver(d) {
+        if(options.events && options.events.xAxisTitle &&
+            options.events.xAxisTitle.mouseOver) options.events.xAxisTitle.mouseOver(d, this);
+    }
+    function handleXAxisTitleMouseOut(d) {
+        if(options.events && options.events.xAxisTitle &&
+            options.events.xAxisTitle.mouseOut) options.events.xAxisTitle.mouseOut(d, this);
+    }
+    function handleXAxisTitleClick(d) {
+        if(options.events && options.events.xAxisTitle &&
+            options.events.xAxisTitle.click) options.events.xAxisTitle.click(d, this);
+    }
+    function handleYAxisTitleMouseOver(d) {
+        if(options.events && options.events.yAxisTitle &&
+            options.events.yAxisTitle.mouseOver) options.events.yAxisTitle.mouseOver(d, this);
+    }
+    function handleYAxisTitleMouseOut(d) {
+        if(options.events && options.events.yAxisTitle &&
+            options.events.yAxisTitle.mouseOut) options.events.yAxisTitle.mouseOut(d, this);
+    }
+    function handleYAxisTitleClick(d) {
+        if(options.events && options.events.yAxisTitle &&
+            options.events.yAxisTitle.click) options.events.yAxisTitle.click(d, this);
+    }
+    function handleLegendTitleMouseOver() {
+        if(options.events && options.events.legendTitle &&
+            options.events.legendTitle.mouseOver) options.events.legendTitle.mouseOver(_ds.Dimension(options.z), this);
+    }
+    function handleLegendTitleMouseOut() {
+        if(options.events && options.events.legendTitle &&
+            options.events.legendTitle.mouseOut) options.events.legendTitle.mouseOut(_ds.Dimension(options.z), this);
+    }
+    function handleLegendTitleClick() {
+        if(options.events && options.events.legendTitle &&
+            options.events.legendTitle.click) options.events.legendTitle.click(_ds.Dimension(options.z), this);
     }
 
     // Create a filter with valid default values
@@ -231,7 +278,8 @@ function JSONstatD3BarChart(options) {
                 .attr("y", d => options.animate? y(0) : y(d.value))
                 .attr("height", d => options.animate? 0 : chartHeight - y(d.value))
                 .on("mouseover", handleBarMouseOver)
-                .on("mouseout", handleBarMouseOut);
+                .on("mouseout", handleBarMouseOut)
+                .on('click', handleBarClick);
 
         var rects = svg_g.selectAll('.slice rect');
 
@@ -260,7 +308,10 @@ function JSONstatD3BarChart(options) {
         svg_g_legend_title.text(_ds.Dimension(options.z).label)
             .attr('x', options.width - options.margin.right - options.margin.left + options.legendPadding)
             .attr('y', -10)
-            .style("text-anchor", "start");
+            .style("text-anchor", "start")
+            .on('mouseover', handleLegendTitleMouseOver)
+            .on('mouseout', handleLegendTitleMouseOut)
+            .on('click', handleLegendTitleClick);
 
         svg_g.selectAll(".legend")
             .data(zNames)
@@ -269,11 +320,12 @@ function JSONstatD3BarChart(options) {
                     .attr("class", (d, i) => "legend legend-" + i)
                     .on('mouseover', handleLegendMouseOver)
                     .on('mouseout', handleLegendMouseOut)
+                    .on('click', handleLegendClick);
 
         svg_g.selectAll('.legend').append("rect")
             .attr('class', 'legend-key')
             .attr("width", 20)
-            .attr("height", 20)
+            .attr("height", 20);
 
         svg_g.selectAll('.legend').append("text")
             .attr('class', 'legend-text')
@@ -293,28 +345,34 @@ function JSONstatD3BarChart(options) {
             .attr("transform", function(d,i) { return "translate(0," + (i * 20) + ")"; });
 
         // text label for the x axis
-        svg_g.selectAll('.x-axis-label').data([_ds.Dimension(options.x)]).enter()
+        svg_g.selectAll('.x-axis-title').data([_ds.Dimension(options.x)]).enter()
             .append("text")
             .style("text-anchor", "middle")
-            .attr('class', 'x-axis-label');
+            .attr('class', 'x-axis-title');
 
-        svg_g.selectAll('.x-axis-label')
+        svg_g.selectAll('.x-axis-title')
             .attr("x", (options.width - options.margin.left - options.margin.right)/2)
             .attr('y', options.height - 50)
-            .text(f => f.label);
+            .text(f => f.label)
+            .on('mouseover', handleXAxisTitleMouseOver)
+            .on('mouseout', handleXAxisTitleMouseOut)
+            .on('click', handleXAxisTitleClick);
         
         // text label for the y axis
-        svg_g.selectAll('.y-axis-label').data([_ds.Dimension(options.y)]).enter()
+        svg_g.selectAll('.y-axis-title').data([_ds.Dimension(options.y)]).enter()
             .append("text")
             .style("text-anchor", "middle")
             .style('writing-mode', 'tb')
             .style("glyph-orientation-vertical", "90")
-            .attr('class', 'y-axis-label');
+            .attr('class', 'y-axis-title');
 
-        svg_g.selectAll('.y-axis-label')
+        svg_g.selectAll('.y-axis-title')
             .attr("x", 0 - options.margin.left + 10)
             .attr('y', chartHeight / 2)
-            .text(f => f.Category(options.filter[options.y]).label + ' (' + _ds.Dimension(options.y).label + ')');
+            .text(f => f.Category(options.filter[options.y]).label + ' (' + _ds.Dimension(options.y).label + ')')
+            .on('mouseover', handleYAxisTitleMouseOver)
+            .on('mouseout', handleYAxisTitleMouseOut)
+            .on('click', handleYAxisTitleClick);
     }
 
     function setX(x) {
