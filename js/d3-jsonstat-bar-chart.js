@@ -11,7 +11,7 @@ function d3jsbc(options) {
     options.colors = options.colors || ["#f59a54","#4e9b9d","#88608b","#cb9f20","#c68bc6"]
     options.legendPadding = options.legendPadding || 50;
 
-    if(options.xSpacing === undefined) options.xSpacing = 10;
+    if(options.zSpacing === undefined) options.zSpacing = 10;
     if(options.animate === undefined) options.animate = true;
     if(options.dataset === undefined) options.dataset = 0;
 
@@ -232,7 +232,7 @@ function d3jsbc(options) {
         x0.domain(xNames);
         
         x1.domain(zNames)
-            .range([options.xSpacing, x0.bandwidth()-options.xSpacing]);
+            .range([options.zSpacing, x0.bandwidth()-options.zSpacing]);
 
         y.domain([0, maxValue()]);
 
@@ -288,8 +288,8 @@ function d3jsbc(options) {
                 .style("fill", d => color(d.z));
         }
         else { // Just one bar per slice.
-            rects.attr('width', x0.bandwidth() - (options.xSpacing * 2))
-                .attr('x', options.xSpacing)
+            rects.attr('width', x0.bandwidth() - (options.zSpacing * 2))
+                .attr('x', options.zSpacing)
                 .style("fill", d => color(d.z));
         }
 
