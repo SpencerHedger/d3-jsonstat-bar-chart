@@ -16,13 +16,12 @@ function JSONstatD3BarChart(options) {
     if(options.dataset === undefined) options.dataset = 0;
 
     var _ds = options.data.Dataset(options.dataset);
-    var _tgt = options.target;
     var x0 = d3.scaleBand();
     var x1 = d3.scaleBand();
     var y = d3.scaleLinear();
     var xAxis = d3.axisBottom();
     var yAxis = d3.axisLeft();
-    var svg = d3.select(options.target).append("svg");
+    var svg = d3.select('#' + options.target).append("svg");
     var svg_g = svg.append("g");
     var svg_g_title = svg_g.append('text')
         .attr('class', 'chart-title');
@@ -35,9 +34,9 @@ function JSONstatD3BarChart(options) {
         .attr("class", "y axis");
 
     function handleBarMouseOver(d, i) {
-        d3.selectAll('.chart-bar').classed('chart-bar-inactive', true);
-        d3.selectAll('.legend').classed('chart-legend-inactive', true);
-        d3.select('.legend-' + i)
+        svg.selectAll('.chart-bar').classed('chart-bar-inactive', true);
+        svg.selectAll('.legend').classed('chart-legend-inactive', true);
+        svg.select('.legend-' + i)
             .classed('chart-legend-mouseover', true)
             .classed('chart-legend-inactive', false);
 
@@ -50,9 +49,9 @@ function JSONstatD3BarChart(options) {
     }
 
     function handleBarMouseOut(d, i) {
-        d3.selectAll('.chart-bar').classed('chart-bar-inactive', false);
-        d3.selectAll('.legend').classed('chart-legend-inactive', false);
-        d3.select('.legend-' + i).classed('chart-legend-mouseover', false);
+        svg.selectAll('.chart-bar').classed('chart-bar-inactive', false);
+        svg.selectAll('.legend').classed('chart-legend-inactive', false);
+        svg.select('.legend-' + i).classed('chart-legend-mouseover', false);
         d3.select(this).classed('chart-bar-mouseover', false);
 
         if(options.events && options.events.bar &&
@@ -65,12 +64,12 @@ function JSONstatD3BarChart(options) {
     }
 
     function handleLegendMouseOver(d, i) {
-        d3.selectAll('.legend').classed('chart-legend-inactive', true);
+        svg.selectAll('.legend').classed('chart-legend-inactive', true);
         d3.select(this)
             .classed('chart-legend-inactive', false)
             .classed('chart-legend-mouseover', true);
-        d3.selectAll('.chart-bar').classed('chart-bar-inactive', true);
-        d3.selectAll('.chart-bar-' + i)
+        svg.selectAll('.chart-bar').classed('chart-bar-inactive', true);
+        svg.selectAll('.chart-bar-' + i)
             .classed('chart-bar-mouseover', true)
             .classed('chart-bar-inactive', false);
 
@@ -80,9 +79,9 @@ function JSONstatD3BarChart(options) {
 
     function handleLegendMouseOut(d, i) {
         d3.select(this).classed('chart-legend-mouseover', false);
-        d3.selectAll('.legend').classed('chart-legend-inactive', false);
-        d3.selectAll('.chart-bar').classed('chart-bar-inactive', false);
-        d3.selectAll('.chart-bar-' + i).classed('chart-bar-mouseover', false);
+        svg.selectAll('.legend').classed('chart-legend-inactive', false);
+        svg.selectAll('.chart-bar').classed('chart-bar-inactive', false);
+        svg.selectAll('.chart-bar-' + i).classed('chart-bar-mouseover', false);
 
         if(options.events && options.events.legendItem &&
             options.events.legendItem.mouseOut) options.events.legendItem.mouseOut(d, i, this);
