@@ -1,4 +1,4 @@
-function JSONstatD3BarChart(options) {
+function d3jsbc(options) {
     // Required options check.
     if(!options.x) console.log('Error: no x dimension option specified.');
     if(!options.y) console.log('Error: no y dimension option specified.');

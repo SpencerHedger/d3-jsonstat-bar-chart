@@ -16,7 +16,7 @@ case the Nomis API) and also from the `data.csv` file included with this project
 <div id="chart1"></div>
 <script>
     var ds = null; // Get data and call JSONstat(...) on it.
-    barchart1 = JSONstatD3BarChart({
+    barchart1 = d3jsbc({
         data: ds,
         title: 'Title for the chart',
         x: 'gender',

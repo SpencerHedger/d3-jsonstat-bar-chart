@@ -3,7 +3,7 @@
         <script src="https://d3js.org/d3.v5.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/jsonstat"></script>
         <script src="https://cdn.jsdelivr.net/npm/jsonstat-utils"></script>
-        <script src="js/jsonstat-d3-bar-chart.js"></script>
+        <script src="js/d3-jsonstat-bar-chart.js"></script>
         
         <style>
             body { font-family: verdana; }
@@ -60,7 +60,7 @@
                 d3.json("https://www.nomisweb.co.uk/api/v01/dataset/NM_162_1.jsonstat.json?geography=2013265921...2013265932&date=latestMINUS8-latest&gender=0...2&age=0...4&measure=1,2&measures=20100").then(function(data) {
                     var ds = JSONstat(data);
                     
-                    barchart1 = JSONstatD3BarChart({
+                    barchart1 = d3jsbc({
                         data: ds,
                         title: ds.Dataset(0).label,
                         x: 'gender',
@@ -101,7 +101,7 @@
 
                 // Read from CSV.
                 d3.text("data.csv").then(function(data) {
-                    barchart2 = JSONstatD3BarChart({
+                    barchart2 = d3jsbc({
                         data: JSONstat(JSONstatUtils.fromCSV(data, { label: 'Imported from CSV' })),
                         title: 'Random data',
                         x: 'date',
